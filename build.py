@@ -137,6 +137,18 @@ def to_row(page):
     ]
 
 
+# 不對外公開的狀態。洽談中／口袋名單會洩漏正在接觸與想談的點位，
+# 對競爭對手和百貨窗口都是有價值的情報，所以不放上公開網頁。
+# 空白狀態代表案子還沒確認，同樣先不公開（Sarah 在 Notion 填好狀態就會出現）。
+PRIVATE_STATUS = {"洽談中", "口袋名單", ""}
+
+
+def drop_private(rows):
+    keep = [r for r in rows if (r[2] or "") not in PRIVATE_STATUS]
+    dropped = len(rows) - len(keep)
+    return keep, dropped
+
+
 def strip_goal(rows):
     """把營業目標整個清空。公開版絕對不能有金額——不要移除這個函式。"""
     removed = 0
@@ -157,6 +169,9 @@ def main():
 
     rows = [to_row(p) for p in pages]
 
+    rows, dropped = drop_private(rows)
+    print(f"已排除不公開的狀態（洽談中／口袋名單／未填狀態）：{dropped} 筆 → 剩 {len(rows)} 筆")
+
     removed = strip_goal(rows)
     print(f"已清除 {removed} 筆營業目標")
 
@@ -170,6 +185,11 @@ def main():
     leaked = [r[1] for r in rows if r[8] is not None]
     if leaked:
         sys.exit(f"❌ 營業目標沒有清乾淨，中止發布：{leaked[:5]}")
+
+    # 保險：確認沒有不該公開的狀態混進來
+    bad = [r[2] for r in rows if (r[2] or "") in PRIVATE_STATUS]
+    if bad:
+        sys.exit(f"❌ 有不該公開的狀態沒濾掉，中止發布：{set(bad)}")
 
     # 依營業起始日排序，沒日期的排最後（跟網頁的排序一致）
     rows.sort(key=lambda r: (r[6] is None, r[6] or ""))
