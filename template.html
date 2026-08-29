@@ -1,0 +1,578 @@
+<title>檔期活動看板</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Archivo:wght@500;600;700&display=swap">
+
+<style>
+:root{
+  --ground:#F2F4F1; --surface:#FFFFFF; --surface-2:#F8FAF7;
+  --ink:#161E1A; --ink-2:#4C5A53; --ink-3:#7C8A82;
+  --rule:#DBE1DB; --rule-2:#EAEFE9;
+  --accent:#14614A; --accent-soft:#E3EFE9; --today:#B4442E;
+  --c-miffy:#F7E2A2; --c-moomin:#AFCFE9; --c-bb:#F3B9C7; --c-mix:#AFD8BE;
+  --bar-ink:#31423A; --bar-edge:rgba(20,40,32,.18);
+  --shadow:0 1px 2px rgba(20,40,32,.05), 0 10px 28px -16px rgba(20,40,32,.22);
+
+  --f-sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",-apple-system,BlinkMacSystemFont,sans-serif;
+  --f-display:"Archivo","Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,"Noto Sans TC","Microsoft JhengHei",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#101512; --surface:#171E1A; --surface-2:#1C2420;
+    --ink:#E6EDE8; --ink-2:#A9B6AF; --ink-3:#77847D;
+    --rule:#2A332E; --rule-2:#222A26;
+    --accent:#5FC49E; --accent-soft:#1B2C25; --today:#E8735A;
+    --c-miffy:#D9C283; --c-moomin:#93B6D6; --c-bb:#D7A1B1; --c-mix:#95C0A6;
+    --bar-ink:#121A16; --bar-edge:rgba(0,0,0,.3);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101512; --surface:#171E1A; --surface-2:#1C2420;
+  --ink:#E6EDE8; --ink-2:#A9B6AF; --ink-3:#77847D;
+  --rule:#2A332E; --rule-2:#222A26;
+  --accent:#5FC49E; --accent-soft:#1B2C25; --today:#E8735A;
+  --c-miffy:#D9C283; --c-moomin:#93B6D6; --c-bb:#D7A1B1; --c-mix:#95C0A6;
+  --bar-ink:#121A16; --bar-edge:rgba(0,0,0,.3);
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--f-sans);
+  font-size:13.5px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:28px 20px 64px}
+.mono{font-family:var(--f-mono); font-variant-numeric:tabular-nums}
+.num{font-family:var(--f-display); font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
+
+/* ── 頁首 ── */
+.top{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:8px}
+h1{
+  font-family:var(--f-display); font-weight:700;
+  font-size:clamp(21px,2.4vw,27px); line-height:1.25; margin:0; letter-spacing:.005em;
+  text-wrap:balance;
+}
+.sub{color:var(--ink-2); font-size:12.5px; margin:6px 0 0}
+.stamp{
+  font-size:11px; color:var(--ink-3); text-align:right; line-height:1.65;
+  border-left:2px solid var(--rule); padding-left:12px;
+}
+.stamp b{color:var(--ink-2); font-weight:500}
+.rule{height:1px; background:var(--rule); margin:22px 0 26px; border:0}
+
+/* ── 摘要 ── */
+.kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:26px}
+.kpi{
+  background:var(--surface); border:1px solid var(--rule); border-radius:8px;
+  padding:13px 15px; box-shadow:var(--shadow); min-width:0;
+}
+.kpi .lab{font-size:10px; letter-spacing:.08em; color:var(--ink-3); text-transform:uppercase; font-weight:500}
+.kpi .val{font-size:24px; font-weight:600; line-height:1.2; margin-top:6px; letter-spacing:-.01em}
+.kpi .val .u{font-size:12px; font-weight:400; color:var(--ink-2); margin-left:3px; letter-spacing:0}
+.kpi .note{font-size:11px; color:var(--ink-2); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+/* ── 區塊標題 ── */
+.sec{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap; margin:0 0 14px}
+h2{font-family:var(--f-display); font-size:16px; font-weight:700; margin:0; letter-spacing:.005em}
+.sec p{margin:0; font-size:11.5px; color:var(--ink-3)}
+
+/* ── 圖例 ── */
+.legend{display:flex; flex-wrap:wrap; gap:3px 9px; margin:0 0 7px; font-size:9.5px; color:var(--ink-3); line-height:1.5}
+.legend span{display:inline-flex; align-items:center; gap:4px}
+.sw{width:8px; height:8px; border-radius:2px; flex:none}
+
+/* ── 分類頁籤 ── */
+.tabrow{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:10px 24px;
+  flex-wrap:wrap; border-bottom:1px solid var(--rule); margin:0 0 10px;
+}
+.tabs{display:flex; gap:2px; flex-wrap:wrap; margin:0; border-bottom:0}
+.tab{
+  font:inherit; font-size:12px; font-weight:500; padding:7px 14px; cursor:pointer;
+  background:none; border:0; border-bottom:2px solid transparent;
+  color:var(--ink-3); margin-bottom:-1px; transition:color .12s ease;
+}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--accent); border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent); outline-offset:-3px; border-radius:3px}
+.tab .n{font-family:var(--f-display); font-size:10.5px; margin-left:5px; opacity:.75}
+
+/* ── 甘特圖 ── */
+.card{background:var(--surface); border:1px solid var(--rule); border-radius:10px; box-shadow:var(--shadow); overflow:hidden}
+.gscroll{overflow-x:auto}
+.gantt{--lw:186px; display:grid; grid-template-columns:var(--lw) minmax(620px,1fr); position:relative; min-width:min-content}
+.gantt[hidden]{display:none}
+.gh{
+  position:sticky; top:0; z-index:4; background:var(--surface-2);
+  border-bottom:1px solid var(--rule); height:33px;
+}
+.gh.lab{
+  grid-column:1; grid-row:1; position:sticky; left:0; z-index:5;
+  display:flex; align-items:center; padding:0 14px;
+  font-size:10px; letter-spacing:.08em; color:var(--ink-3); text-transform:uppercase; font-weight:500;
+  border-right:1px solid var(--rule);
+}
+.gh.months{grid-column:2; grid-row:1; position:relative}
+.gh.months i{
+  position:absolute; top:0; height:100%; display:flex; align-items:center; justify-content:center;
+  font-style:normal; font-size:11.5px; font-weight:500; color:var(--ink-2);
+  border-left:1px solid var(--rule); white-space:nowrap;
+}
+.gh.months i.cur{color:var(--accent); font-weight:700}
+
+.grow-l{
+  grid-column:1; position:sticky; left:0; z-index:3; background:var(--surface);
+  border-right:1px solid var(--rule); border-bottom:1px solid var(--rule-2);
+  padding:3px 12px; min-height:29px; display:flex; align-items:center;
+}
+.grow-l .nm{font-size:11.5px; font-weight:500; line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.grow-l.off .nm{color:var(--ink-3); text-decoration:line-through}
+
+.grow-t{
+  grid-column:2; position:relative; border-bottom:1px solid var(--rule-2);
+  min-height:29px; display:flex; align-items:center;
+}
+.overlay{grid-column:2; grid-row:1/-1; position:relative; pointer-events:none; z-index:2}
+.overlay .m{position:absolute; top:0; bottom:0; width:1px; background:var(--rule)}
+.overlay .today{position:absolute; top:0; bottom:0; width:0; border-left:2px dashed var(--today); z-index:3}
+.overlay .today b{
+  position:absolute; top:5px; left:5px; font-size:10.5px; font-weight:600; color:var(--today);
+  background:var(--surface); padding:0 4px; border-radius:3px; white-space:nowrap;
+}
+
+.bar{
+  position:absolute; height:21px; border-radius:11px; cursor:pointer;
+  display:flex; align-items:center; padding:0 9px; gap:5px; min-width:6px;
+  color:var(--bar-ink); font-size:10px; font-weight:500; white-space:nowrap; overflow:hidden;
+  border:1px solid var(--bar-edge);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.bar:hover,.bar:focus-visible{transform:translateY(-1px); box-shadow:0 5px 14px -4px rgba(20,40,32,.4); outline:none; z-index:3}
+.bar:focus-visible{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
+.bar .txt{overflow:hidden; text-overflow:ellipsis; font-family:var(--f-mono); font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+.bar.s-prep{border-style:dashed; border-color:var(--bar-ink); border-width:1.5px}
+.bar.s-done{opacity:.5}
+.bar.s-cancel{opacity:.34}
+.bar.s-cancel .txt{text-decoration:line-through}
+.bar.clipL{border-top-left-radius:3px; border-bottom-left-radius:3px; border-left:3px solid var(--ink-3)}
+.bar.clipR{border-top-right-radius:3px; border-bottom-right-radius:3px; border-right:3px solid var(--ink-3)}
+.bar.live{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--accent)}
+
+.empty{padding:46px 20px; text-align:center; color:var(--ink-3); font-size:14px}
+
+/* ── 明細表 ── */
+.tools{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:0 0 14px}
+.search{
+  flex:1 1 220px; min-width:170px; padding:7px 11px; font:inherit; font-size:12.5px;
+  background:var(--surface); color:var(--ink);
+  border:1px solid var(--rule); border-radius:7px;
+}
+.search::placeholder{color:var(--ink-3)}
+.search:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chip{
+  font:inherit; font-size:11.5px; padding:5px 11px; cursor:pointer;
+  background:var(--surface); color:var(--ink-2);
+  border:1px solid var(--rule); border-radius:999px; transition:all .12s ease;
+}
+.chip:hover{border-color:var(--ink-3); color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--surface); font-weight:500}
+:root[data-theme="dark"] .chip[aria-pressed="true"],
+:root:not([data-theme="light"]) .chip[aria-pressed="true"]{color:var(--ground)}
+.chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse; width:100%; font-size:12.5px; min-width:900px}
+thead th{
+  position:sticky; top:0; z-index:2; background:var(--surface-2);
+  text-align:left; font-size:10px; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:500; padding:8px 10px; white-space:nowrap;
+  border-bottom:1px solid var(--rule);
+}
+tbody td{padding:7px 10px; border-bottom:1px solid var(--rule-2); vertical-align:middle; white-space:nowrap}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr.off td:nth-child(2){color:var(--ink-3); text-decoration:line-through}
+td.r{text-align:right}
+.nowrap{white-space:nowrap}
+.note{color:var(--ink-2); font-size:11px; max-width:240px; line-height:1.45;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+.pill{
+  display:inline-block; font-size:10.5px; font-weight:500; padding:1.5px 8px;
+  border-radius:999px; white-space:nowrap; border:1px solid transparent;
+}
+.p-live{background:var(--accent-soft); color:var(--accent); border-color:var(--accent)}
+.p-prep{background:transparent; color:var(--ink-2); border-color:var(--ink-3); border-style:dashed}
+.p-done{background:var(--rule-2); color:var(--ink-3)}
+.p-talk{background:transparent; color:var(--ink-2); border-color:var(--rule)}
+.p-pool{background:transparent; color:var(--ink-3); border-color:var(--rule-2)}
+.p-off{background:transparent; color:var(--ink-3); border-color:var(--rule-2); text-decoration:line-through}
+
+.tags{display:flex; gap:4px; white-space:nowrap}
+.tag{
+  font-size:10px; padding:1px 7px; border-radius:999px; white-space:nowrap;
+  color:var(--bar-ink); font-weight:500;
+}
+.tag.dim{background:var(--rule); color:var(--ink-3)}
+
+.count{font-size:11.5px; color:var(--ink-3); margin:12px 0 0}
+
+/* ── 明細抽屜 ── */
+dialog{
+  border:1px solid var(--rule); border-radius:12px; padding:0; max-width:440px; width:calc(100% - 32px);
+  background:var(--surface); color:var(--ink); box-shadow:0 24px 60px -20px rgba(0,0,0,.4);
+}
+dialog::backdrop{background:rgba(10,20,16,.42)}
+.dlg{padding:22px 24px 24px}
+.dlg h3{font-family:var(--f-display); font-weight:700; font-size:16px; margin:0 0 3px; line-height:1.35}
+.dlg .code{font-size:11px; color:var(--ink-3); margin-bottom:16px}
+.dl{display:grid; grid-template-columns:74px 1fr; gap:8px 13px; font-size:12.5px; margin:0}
+.dl dt{color:var(--ink-3); font-size:11.5px}
+.dl dd{margin:0}
+.dlg .x{
+  position:absolute; top:14px; right:16px; background:none; border:0; cursor:pointer;
+  font-size:22px; line-height:1; color:var(--ink-3); padding:4px 8px; border-radius:6px;
+}
+.dlg .x:hover{background:var(--surface-2); color:var(--ink)}
+.dlg .x:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+
+footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--rule); font-size:11.5px; color:var(--ink-3)}
+
+@media (max-width:620px){
+  .wrap{padding:22px 14px 56px}
+  .gantt{--lw:118px}
+  .stamp{text-align:left; border-left:0; border-top:1px solid var(--rule); padding:10px 0 0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <div>
+        <h1>檔期活動看板</h1>
+        <p class="sub">快閃店 · 寄售 · 7-11 活動</p>
+      </div>
+      <div class="stamp mono">
+        資料更新 <b id="stampDate">—</b><br>
+        來源：Notion 檔期活動看板
+      </div>
+    </div>
+    <hr class="rule">
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section>
+    <div class="sec">
+      <h2>檔期甘特圖</h2>
+      <p id="ganttRange">—</p>
+    </div>
+    <div class="tabrow">
+      <div class="tabs" id="ganttTabs" role="tablist"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="card">
+      <div class="gscroll">
+        <div class="gantt" id="gantt"></div>
+      </div>
+      <div class="empty" id="ganttEmpty" hidden>這 5 個月區間內沒有檔期。</div>
+    </div>
+  </section>
+
+  <section style="margin-top:38px">
+    <div class="sec">
+      <h2>全部檔期活動一覽表</h2>
+      <p>可搜尋櫃點、檔次編號、主題、窗口</p>
+    </div>
+    <div class="tools">
+      <input class="search" id="q" type="search" placeholder="搜尋櫃點、檔次編號、主題…" autocomplete="off">
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="card">
+      <div class="tscroll">
+        <table>
+          <thead><tr>
+            <th>檔次</th><th>櫃點</th><th>主題</th><th>狀態</th>
+            <th>營業日</th><th class="r">天數</th>
+            <th class="r">坪數</th><th>窗口</th><th>備註</th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="count" id="count"></p>
+  </section>
+
+  <footer>
+    甘特圖顯示「本月起連續 5 個月」，每個月會自動往前推進。檔期內容為 Notion 資料庫快照。
+  </footer>
+</div>
+
+<dialog id="dlg"><div class="dlg">
+  <button class="x" id="dlgX" aria-label="關閉">&times;</button>
+  <h3 id="dTitle"></h3>
+  <div class="code mono" id="dCode"></div>
+  <dl class="dl" id="dBody"></dl>
+</div></dialog>
+
+<script>
+// [檔次, 櫃點, 狀態, 類型, 主題, 窗口, 起, 迄, 目標(萬), 坪數, 場地大小, 備註]
+const RAW = __RAW__;
+const SNAPSHOT = "__SNAPSHOT__";
+</script>
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const D  = s => { if(!s) return null; const p=s.split("-"); return Date.UTC(+p[0],+p[1]-1,+p[2]); };
+const DAY = 864e5;
+const fmt = ms => { const d=new Date(ms); return (d.getUTCMonth()+1)+"/"+d.getUTCDate(); };
+const fmtY = ms => { const d=new Date(ms); return d.getUTCFullYear()+"/"+(d.getUTCMonth()+1)+"/"+d.getUTCDate(); };
+
+/* 四色分類：單一 IP 專場各給一色，我適與多 IP 綜合場一律粉綠 */
+const CATS = {
+  miffy :{v:"--c-miffy",  label:"MF 專場", full:"Miffy 專場"},
+  moomin:{v:"--c-moomin", label:"MM 專場", full:"Moomin 專場"},
+  bb    :{v:"--c-bb",     label:"BB 專場", full:"Brunch Brother 專場"},
+  mix   :{v:"--c-mix",    label:"我適/綜合", full:"我適或多 IP 綜合場"}
+};
+const catOf = r => {
+  const ips = r.themes.filter(t => t !== "DIY");   // DIY 是加值活動，不計入 IP 數
+  if(ips.length === 1){
+    if(ips[0] === "Miffy") return "miffy";
+    if(ips[0] === "Moomin") return "moomin";
+    if(ips[0] === "Brunch Brother") return "bb";
+  }
+  return "mix";
+};
+const catColor = r => "var(" + CATS[catOf(r)].v + ")";
+
+/* 主題縮寫，沿用 Excel 的寫法：MF/MM/BB/PG */
+const ABBR = {"Miffy":"MF","Moomin":"MM","Brunch Brother":"BB","Pingu":"PG"};
+const themeShort = r => r.themes.map(t => ABBR[t] || t).join("+");
+const STATUS = {
+  "進行中":{cls:"live",    pill:"p-live"},
+  "準備中":{cls:"s-prep",  pill:"p-prep"},
+  "結束":{cls:"s-done",    pill:"p-done"},
+  "取消":{cls:"s-cancel",  pill:"p-off"},
+  "洽談中":{cls:"",        pill:"p-talk"},
+  "口袋名單":{cls:"",      pill:"p-pool"}
+};
+
+const rows = RAW.map(r => ({
+  code:r[0], name:r[1], status:r[2], type:r[3],
+  themes:r[4] ? r[4].split(",") : [],
+  owner:r[5], start:D(r[6]), end:D(r[7]),
+  goal:r[8], ping:r[9], size:r[10], note:r[11]
+}));
+rows.forEach(r => { r.days = (r.start && r.end) ? Math.round((r.end-r.start)/DAY)+1 : null; });
+
+/* 視窗：本月起連續 5 個月，每月自動推進 */
+const now = new Date();
+const WIN_START = Date.UTC(now.getFullYear(), now.getMonth(), 1);
+const WIN_END   = Date.UTC(now.getFullYear(), now.getMonth()+5, 1) - DAY;
+const SPAN = (WIN_END - WIN_START)/DAY + 1;
+const pct = ms => ((ms - WIN_START)/DAY) / SPAN * 100;
+
+const months = [];
+for(let i=0;i<5;i++){
+  const s = Date.UTC(now.getFullYear(), now.getMonth()+i, 1);
+  const e = Date.UTC(now.getFullYear(), now.getMonth()+i+1, 1) - DAY;
+  const d = new Date(s);
+  months.push({ s, e, cur:i===0, label:d.getUTCFullYear()+"年"+(d.getUTCMonth()+1)+"月" });
+}
+$("#stampDate").textContent = SNAPSHOT.replace(/-/g,"/");
+$("#ganttRange").textContent = months[0].label + " – " + months[4].label + "（每月自動推進）";
+
+/* 沒填結束日時：只有進行中／準備中才算持續，其餘視為單日 */
+const endOf = r => r.end != null ? r.end
+  : ((r.status === "進行中" || r.status === "準備中") ? WIN_END : r.start);
+const openEnded = r => r.end == null && (r.status === "進行中" || r.status === "準備中");
+
+/* 圖例 */
+$("#legend").innerHTML =
+  Object.keys(CATS).map(k =>
+    '<span title="' + esc(CATS[k].full) + '"><i class="sw" style="background:var(' + CATS[k].v + ')"></i>'
+    + esc(CATS[k].label) + '</span>'
+  ).join("")
+  + '<span style="opacity:.8">｜虛線＝準備中</span>'
+  + '<span style="opacity:.8">淡色＝結束／取消</span>'
+  + '<span style="color:var(--today)"><i class="sw" style="background:var(--today)"></i>今天</span>';
+
+/* 甘特圖 */
+const inWin = rows
+  .filter(r => r.start && r.start <= WIN_END && endOf(r) >= WIN_START)
+  .sort((a,b) => a.start - b.start || a.name.localeCompare(b.name,"zh-Hant"));
+
+const TYPES = ["全部活動","快閃店","寄售","7-11活動"];
+let ganttType = "全部活動";
+const byType = t => t === "全部活動" ? inWin : inWin.filter(r => r.type === t);
+const g = $("#gantt");
+
+$("#ganttTabs").innerHTML = TYPES.map(t =>
+  '<button class="tab" role="tab" data-t="' + esc(t) + '" aria-selected="' + (t === ganttType) + '">'
+  + esc(t) + '<span class="n">' + byType(t).length + '</span></button>').join("");
+$("#ganttTabs").addEventListener("click", e => {
+  const b = e.target.closest(".tab");
+  if(!b) return;
+  ganttType = b.dataset.t;
+  $("#ganttTabs").querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === b));
+  drawGantt();
+});
+
+function drawGantt(){
+  const list = byType(ganttType);
+  if(!list.length){
+    $("#ganttEmpty").textContent = ganttType === "全部活動"
+      ? "這 5 個月區間內沒有檔期。"
+      : "這 5 個月區間內沒有「" + ganttType + "」的檔期。";
+    $("#ganttEmpty").hidden = false;
+    g.innerHTML = "";          // 清掉上一個頁籤留下的列
+    g.hidden = true;
+    return;
+  }
+  $("#ganttEmpty").hidden = true;
+  g.hidden = false;
+  let html = '<div class="gh lab">櫃點</div><div class="gh months">';
+  months.forEach(m => {
+    const l = pct(m.s), w = pct(m.e + DAY) - l;
+    html += '<i class="' + (m.cur ? "cur" : "") + '" style="left:'+l+'%;width:'+w+'%">' + esc(m.label) + '</i>';
+  });
+  html += '</div>';
+
+  list.forEach((r,i) => {
+    const st = STATUS[r.status] || {cls:""};
+    const bs = Math.max(r.start, WIN_START);
+    const be = Math.min(endOf(r), WIN_END);
+    const l = pct(bs), w = Math.max(pct(be + DAY) - l, 0.6);
+    const clip = (r.start < WIN_START ? " clipL" : "") + ((openEnded(r) || endOf(r) > WIN_END) ? " clipR" : "");
+    html += '<div class="grow-l' + (r.status === "取消" ? " off" : "") + '" style="grid-row:' + (i+2) + '">'
+          +   '<span class="nm" title="' + (r.code ? esc(r.code) + "　" : "") + esc(r.name) + '">' + esc(r.name) + '</span>'
+          + '</div>'
+          + '<div class="grow-t" style="grid-row:' + (i+2) + '"><button class="bar ' + st.cls + clip + '" data-i="' + i + '"'
+          +   ' style="left:'+l+'%;width:'+w+'%;background:' + catColor(r) + '"'
+          +   ' title="' + esc(r.name) + "　" + esc(fmt(r.start)) + "–"
+          +   (openEnded(r) ? "持續" : esc(fmt(endOf(r)))) + '">'
+          +   (w >= 9 ? '<span class="txt">' + esc(fmt(r.start)) + "–"
+                + (openEnded(r) ? "持續" : esc(fmt(endOf(r)))) + '</span>' : "")
+          + '</button></div>';
+  });
+
+  html += '<div class="overlay" style="grid-row:1/span ' + (list.length + 1) + '">';
+  months.slice(1).forEach(m => { html += '<div class="m" style="left:' + pct(m.s) + '%"></div>'; });
+  const t = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  if(t >= WIN_START && t <= WIN_END){
+    html += '<div class="today" style="left:' + pct(t) + '%"></div>';
+  }
+  html += '</div>';
+  g.innerHTML = html;
+  g.querySelectorAll(".bar").forEach(b =>
+    b.addEventListener("click", () => openCard(list[+b.dataset.i])));
+}
+drawGantt();
+
+/* 摘要 */
+const live = rows.filter(r => r.status === "進行中");
+const winActive = inWin.filter(r => r.status !== "取消");
+const today0 = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+const next = rows
+  .filter(r => r.start && r.start > today0 && (r.status === "準備中" || r.status === "進行中"))
+  .sort((a,b) => a.start - b.start)[0];
+
+$("#kpis").innerHTML = [
+  ["下一檔活動", next ? fmtY(next.start) : "—", "", next ? next.name : "近期無新檔期"],
+  ["進行中檔期", live.length, "檔", "目前正在營業"],
+  ["區間內檔期", winActive.length, "檔", months[0].label + "起 5 個月內檔期"]
+].map(k => '<div class="kpi">'
+  + '<div class="lab">' + esc(k[0]) + '</div>'
+  + '<div class="val num">' + esc(k[1]) + (k[2] ? '<span class="u">' + esc(k[2]) + '</span>' : "") + '</div>'
+  + '<div class="note" title="' + esc(k[3]) + '">' + esc(k[3]) + '</div>'
+  + '</div>').join("");
+
+/* 明細表 */
+const ORDER = ["全部","進行中","準備中","洽談中","口袋名單","結束","取消"];
+let filter = "進行中", query = "";
+
+$("#chips").innerHTML = ORDER.map(s =>
+  '<button class="chip" data-s="' + esc(s) + '" aria-pressed="' + (s === filter) + '">' + esc(s) + '</button>'
+).join("");
+$("#chips").addEventListener("click", e => {
+  const b = e.target.closest(".chip");
+  if(!b) return;
+  filter = b.dataset.s;
+  $("#chips").querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c === b));
+  render();
+});
+$("#q").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); render(); });
+
+/* 固定依營業起始日排序，最早的在最上面；沒有日期的排最後 */
+const sorted = rows.slice().sort((a,b) => {
+  if(a.start && b.start) return a.start - b.start;
+  if(a.start) return -1;
+  if(b.start) return 1;
+  return a.name.localeCompare(b.name,"zh-Hant");
+});
+let shown = [];
+
+function render(){
+  shown = sorted.filter(r => {
+    if(filter !== "全部" && r.status !== filter) return false;
+    if(!query) return true;
+    return [r.code, r.name, r.themes.join(" "), r.owner, r.status, r.type, r.size, r.note]
+      .join(" ").toLowerCase().indexOf(query) >= 0;
+  });
+  $("#tbody").innerHTML = shown.map((r,i) => {
+    const st = STATUS[r.status] || {pill:"p-talk"};
+    const tags = r.themes.length
+      ? '<span class="tag" style="background:' + catColor(r) + '" title="' + esc(r.themes.join("、")) + '">'
+        + esc(themeShort(r)) + '</span>'
+      : '<span class="tag dim">未定</span>';
+    const range = r.start
+      ? esc(fmtY(r.start)) + (r.end ? " – " + esc(fmtY(r.end)) : " – 持續")
+      : "—";
+    return '<tr class="' + (r.status === "取消" ? "off" : "") + '">'
+      + '<td class="mono nowrap">' + esc(r.code || "—") + '</td>'
+      + '<td><button data-open="' + i + '" style="all:unset;cursor:pointer;font-weight:500">' + esc(r.name) + '</button></td>'
+      + '<td><div class="tags">' + tags + '</div></td>'
+      + '<td><span class="pill ' + st.pill + '">' + esc(r.status) + '</span></td>'
+      + '<td class="mono nowrap">' + range + '</td>'
+      + '<td class="r mono">' + (r.days == null ? "—" : r.days) + '</td>'
+      + '<td class="r mono">' + (r.ping == null ? "—" : r.ping) + '</td>'
+      + '<td class="nowrap">' + esc(r.owner || "—") + '</td>'
+      + '<td class="note">' + esc(r.note || "") + '</td>'
+      + '</tr>';
+  }).join("") || '<tr><td colspan="9" class="empty">找不到符合的檔期。</td></tr>';
+
+  $("#count").textContent = "顯示 " + shown.length + " 筆，共 " + rows.length + " 筆";
+  $("#tbody").querySelectorAll("[data-open]").forEach(b =>
+    b.addEventListener("click", () => openCard(shown[+b.dataset.open])));
+}
+
+/* 明細卡 */
+const dlg = $("#dlg");
+function openCard(r){
+  if(!r) return;
+  $("#dTitle").textContent = r.name;
+  $("#dCode").textContent = (r.code ? "檔次 " + r.code + "　" : "") + r.type + "　" + r.status;
+  const f = [
+    ["營業日", r.start ? fmtY(r.start) + (r.end ? " – " + fmtY(r.end) : " – 持續") : "未定"],
+    ["天數", r.days == null ? "—" : r.days + " 天"],
+    ["主題", r.themes.length ? r.themes.join("、") : "未定"],
+    ["場地", r.size || (r.ping == null ? "—" : r.ping + "坪")],
+    ["進場窗口", r.owner || "—"],
+    ["備註", r.note || "—"]
+  ];
+  $("#dBody").innerHTML = f.map(x => "<dt>" + esc(x[0]) + "</dt><dd>" + esc(x[1]) + "</dd>").join("");
+  if(dlg.showModal) dlg.showModal(); else dlg.setAttribute("open","");
+}
+$("#dlgX").addEventListener("click", () => dlg.close());
+dlg.addEventListener("click", e => { if(e.target === dlg) dlg.close(); });
+
+render();
+})();
+</script>
