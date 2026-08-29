@@ -129,6 +129,18 @@ def main():
     if not pages:
         sys.exit("❌ 一筆都沒抓到。通常是資料庫還沒連結到「檔期看板同步」這個整合。")
 
+    # ── 診斷：印出欄位名稱與型別，方便對照 ──
+    # 注意：這是公開 repo，執行紀錄任何人都看得到，所以只印欄位「結構」不印金額。
+    pr0 = pages[0].get("properties", {})
+    print("\n--- 欄位清單（名稱 → 型別）---")
+    for k, v in sorted(pr0.items()):
+        print(f"  {k!r} → {v.get('type')}")
+    print("\n--- 前 3 筆的「時程」原始結構 ---")
+    for pg in pages[:3]:
+        p = pg.get("properties", {}).get("時程")
+        print("  ", json.dumps(p, ensure_ascii=False))
+    print("---\n")
+
     rows = [to_row(p) for p in pages]
 
     removed = strip_goal(rows)
