@@ -84,16 +84,40 @@ def p_number(props, name):
     return p.get("number")
 
 
-def p_date(props, name):
-    p = props.get(name) or {}
-    d = p.get("date") or {}
+# 日期欄位的名稱。Notion 裡目前叫「活動日程」，之前叫過「時程」。
+# 都找不到的話會自動抓第一個 date 型別的欄位，避免改名就整個壞掉。
+DATE_CANDIDATES = ("活動日程", "時程")
+_date_key = None
+
+
+def find_date_key(props):
+    global _date_key
+    if _date_key and _date_key in props:
+        return _date_key
+    for n in DATE_CANDIDATES:
+        if isinstance(props.get(n), dict) and props[n].get("type") == "date":
+            _date_key = n
+            return n
+    for k, v in props.items():
+        if isinstance(v, dict) and v.get("type") == "date":
+            _date_key = k
+            print(f"⚠️ 找不到預期的日期欄位，改用「{k}」")
+            return k
+    return None
+
+
+def p_date(props):
+    key = find_date_key(props)
+    if not key:
+        return None, None
+    d = (props.get(key) or {}).get("date") or {}
     return d.get("start"), d.get("end")
 
 
 def to_row(page):
     """轉成看板用的 12 欄格式。"""
     pr = page.get("properties", {})
-    start, end = p_date(pr, "時程")
+    start, end = p_date(pr)
     # 日期可能帶時間，只留日期部分
     start = start[:10] if start else None
     end = end[:10] if end else None
@@ -129,22 +153,18 @@ def main():
     if not pages:
         sys.exit("❌ 一筆都沒抓到。通常是資料庫還沒連結到「檔期看板同步」這個整合。")
 
-    # ── 診斷：印出欄位名稱與型別，方便對照 ──
-    # 注意：這是公開 repo，執行紀錄任何人都看得到，所以只印欄位「結構」不印金額。
-    pr0 = pages[0].get("properties", {})
-    print("\n--- 欄位清單（名稱 → 型別）---")
-    for k, v in sorted(pr0.items()):
-        print(f"  {k!r} → {v.get('type')}")
-    print("\n--- 前 3 筆的「時程」原始結構 ---")
-    for pg in pages[:3]:
-        p = pg.get("properties", {}).get("時程")
-        print("  ", json.dumps(p, ensure_ascii=False))
-    print("---\n")
+    print(f"日期欄位：「{find_date_key(pages[0].get('properties', {}))}」")
 
     rows = [to_row(p) for p in pages]
 
     removed = strip_goal(rows)
     print(f"已清除 {removed} 筆營業目標")
+
+    # 健康檢查：日期抓不到就中止，不要默默產出一份沒有甘特圖的網頁
+    dated = sum(1 for r in rows if r[6])
+    print(f"有營業日的：{dated} / {len(rows)} 筆")
+    if dated == 0:
+        sys.exit("❌ 一筆日期都沒抓到，中止發布。可能是 Notion 的日期欄位改名了。")
 
     # 保險：確認真的沒有金額殘留
     leaked = [r[1] for r in rows if r[8] is not None]
