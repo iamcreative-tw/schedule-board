@@ -495,8 +495,13 @@ $("#kpis").innerHTML = [
   + '</div>').join("");
 
 /* 明細表 */
-const ORDER = ["全部","進行中","準備中","洽談中","口袋名單","結束","取消"];
-let filter = "進行中", query = "";
+/* 篩選標籤依實際資料產生，沒有資料的狀態就不顯示，避免出現點了空白的標籤 */
+const STATUS_ORDER = ["進行中","準備中","洽談中","口袋名單","結束","取消"];
+const ORDER = ["全部"].concat(
+  STATUS_ORDER.filter(s => rows.some(r => r.status === s))
+);
+let filter = ORDER.indexOf("進行中") >= 0 ? "進行中" : "全部";
+let query = "";
 
 $("#chips").innerHTML = ORDER.map(s =>
   '<button class="chip" data-s="' + esc(s) + '" aria-pressed="' + (s === filter) + '">' + esc(s) + '</button>'
