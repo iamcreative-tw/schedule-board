@@ -198,6 +198,7 @@ tbody tr:hover{background:var(--surface-2)}
 tbody tr.off td:nth-child(2){color:var(--ink-3); text-decoration:line-through}
 td.r{text-align:right}
 .nowrap{white-space:nowrap}
+.idx,.idxh{color:var(--ink-3); width:1%; white-space:nowrap; padding-right:14px}
 .note{color:var(--ink-2); font-size:11px; max-width:240px; line-height:1.45;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
@@ -296,7 +297,7 @@ footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--rule); font
       <div class="tscroll">
         <table>
           <thead><tr>
-            <th>檔次</th><th>櫃點</th><th>主題</th><th>狀態</th>
+            <th class="r idxh">#</th><th>櫃點</th><th>主題</th><th>狀態</th>
             <th>營業日</th><th class="r">天數</th>
             <th class="r">坪數</th><th>窗口</th><th>備註</th>
           </tr></thead>
@@ -546,7 +547,7 @@ function render(){
       ? esc(fmtY(r.start)) + (r.end ? " – " + esc(fmtY(r.end)) : " – 持續")
       : "—";
     return '<tr class="' + (r.status === "取消" ? "off" : "") + '">'
-      + '<td class="mono nowrap">' + esc(r.code || "—") + '</td>'
+      + '<td class="r mono idx">' + (i + 1) + '</td>'
       + '<td><button data-open="' + i + '" style="all:unset;cursor:pointer;font-weight:500">' + esc(r.name) + '</button></td>'
       + '<td><div class="tags">' + tags + '</div></td>'
       + '<td><span class="pill ' + st.pill + '">' + esc(r.status) + '</span></td>'
@@ -568,7 +569,7 @@ const dlg = $("#dlg");
 function openCard(r){
   if(!r) return;
   $("#dTitle").textContent = r.name;
-  $("#dCode").textContent = (r.code ? "檔次 " + r.code + "　" : "") + r.type + "　" + r.status;
+  $("#dCode").textContent = r.type + "　" + r.status;
   const f = [
     ["營業日", r.start ? fmtY(r.start) + (r.end ? " – " + fmtY(r.end) : " – 持續") : "未定"],
     ["天數", r.days == null ? "—" : r.days + " 天"],
