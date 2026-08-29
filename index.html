@@ -476,7 +476,12 @@ const inWin = rows
   .filter(r => r.start && r.start <= WIN_END && endOf(r) >= WIN_START)
   .sort((a,b) => a.start - b.start || a.name.localeCompare(b.name,"zh-Hant"));
 
-const TYPES = ["全部活動","快閃店","寄售","7-11活動"];
+/* 分類頁籤同樣依實際資料產生：沒有的類型不長頁籤，新類型會自己冒出來 */
+const TYPE_ORDER = ["快閃店","寄售","銷售","7-11活動"];
+const usedTypes = [...new Set(rows.map(r => r.type).filter(Boolean))];
+const TYPES = ["全部活動"]
+  .concat(TYPE_ORDER.filter(t => usedTypes.indexOf(t) >= 0))
+  .concat(usedTypes.filter(t => TYPE_ORDER.indexOf(t) < 0).sort());
 let ganttType = "全部活動";
 const byType = t => t === "全部活動" ? inWin : inWin.filter(r => r.type === t);
 const g = $("#gantt");
