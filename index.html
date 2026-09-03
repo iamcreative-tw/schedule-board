@@ -104,7 +104,7 @@ h2{font-family:var(--f-display); font-size:16px; font-weight:700; margin:0; lett
 /* ── 甘特圖 ── */
 .card{background:var(--surface); border:1px solid var(--rule); border-radius:10px; box-shadow:var(--shadow); overflow:hidden}
 .gscroll{overflow-x:auto}
-.gantt{--lw:186px; display:grid; grid-template-columns:var(--lw) minmax(620px,1fr); position:relative; min-width:min-content}
+.gantt{--lw:200px; display:grid; grid-template-columns:var(--lw) minmax(620px,1fr); position:relative; min-width:min-content}
 .gantt[hidden]{display:none}
 .gh{
   position:sticky; top:0; z-index:4; background:var(--surface-2);
@@ -131,6 +131,7 @@ h2{font-family:var(--f-display); font-size:16px; font-weight:700; margin:0; lett
 }
 .grow-l .nm{font-size:11.5px; font-weight:500; line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .grow-l.off .nm{color:var(--ink-3); text-decoration:line-through}
+.grow-l .pre{font-style:normal; font-weight:400; color:var(--ink-3)}
 
 .grow-t{
   grid-column:2; position:relative; border-bottom:1px solid var(--rule-2);
@@ -269,7 +270,7 @@ footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--rule); font
 
   <section>
     <div class="sec">
-      <h2>檔期甘特圖</h2>
+      <h2>檔期時程表</h2>
       <p id="ganttRange">—</p>
     </div>
     <div class="tabrow">
@@ -287,17 +288,17 @@ footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--rule); font
   <section style="margin-top:38px">
     <div class="sec">
       <h2>全部檔期活動一覽表</h2>
-      <p>可搜尋櫃點、檔次編號、主題、窗口</p>
+      <p>可搜尋活動名稱、類型、主題、窗口</p>
     </div>
     <div class="tools">
-      <input class="search" id="q" type="search" placeholder="搜尋櫃點、檔次編號、主題…" autocomplete="off">
+      <input class="search" id="q" type="search" placeholder="搜尋活動名稱、類型、主題…" autocomplete="off">
       <div class="chips" id="chips"></div>
     </div>
     <div class="card">
       <div class="tscroll">
         <table>
           <thead><tr>
-            <th class="r idxh">#</th><th>櫃點</th><th>主題</th><th>狀態</th>
+            <th class="r idxh">#</th><th>檔期活動</th><th>類型</th><th>主題</th><th>狀態</th>
             <th>營業日</th><th class="r">天數</th>
             <th class="r">坪數</th><th>窗口</th><th>備註</th>
           </tr></thead>
@@ -366,24 +367,24 @@ const RAW = [
 ["26-2", "華山我適文創快閃店", "結束", "快閃店", "我適", "孜純", "2026-01-14", "2026-04-26", null, 30, "30坪", "1/12交場；4/27交場"],
 ["26-1", "台中中友我適文創快閃店", "結束", "快閃店", "我適", "麥可", "2026-01-29", "2026-03-01", null, 50, "50坪", "1/27閉店後&1/28進場；3/2撤場"],
 ["26-5", "台北新光三越南西店", "結束", "快閃店", "Moomin,Miffy,Brunch Brother,DIY", "孜純", "2026-04-15", "2026-05-10", null, 172.6, "172.6坪", "4/13中午起進場 ; 5/11中午12點交場"],
-["26-21", "7-11 Brunch Brother專案", "結束", "7-11活動", "Brunch Brother", "", "2026-04-16", "2026-06-30", null, null, "", ""],
+["26-21", "7-11 Brunch Brother專案", "結束", "7-11 快閃購", "Brunch Brother", "", "2026-04-16", "2026-06-30", null, null, "", ""],
 ["26-6", "台中LaLaport B1快閃店", "進行中", "快閃店", "我適,DIY", "劭劭", "2026-04-24", "2026-09-20", null, 62.36, "62.36坪", "9/21~9/22兩天撤場；9/23交場"],
 ["26-7", "台中新光三越MM&MF&BB快店", "結束", "快閃店", "Moomin,Miffy,Brunch Brother,DIY", "孜純", "2026-05-13", "2026-06-10", null, 70, "約70坪", "5/12進場；6/10閉店後撤場"],
 ["26-4", "松菸男澡堂暑假檔", "進行中", "快閃店", "Moomin,Miffy,Brunch Brother,DIY", "", "2026-07-03", "2026-09-29", null, 36, "室內36坪(戶外74坪)", "6/30~7/2進場 ; 9/20撤場"],
 ["26-18", "欣美勝LOFT案", "進行中", "寄售", "Miffy", "", "2026-07-22", "2026-09-15", null, null, "", ""],
-["26-20", "7-11 Moomin專案", "結束", "7-11活動", "Moomin", "", "2026-07-23", "2026-09-01", null, null, "", ""],
+["26-20", "7-11 Moomin專案", "結束", "7-11 快閃購", "Moomin", "", "2026-07-23", "2026-09-01", null, null, "", ""],
 ["26-8", "台中大遠百10F活動中心", "結束", "快閃店", "我適", "", "2026-07-30", "2026-08-27", null, 60, "約60坪", "7/29閉店後進場；7/30 16:00開始營業"],
 ["26-12", "巨城B1我適快閃店", "進行中", "快閃店", "我適", "外包", "2026-08-01", "2026-09-30", null, 5, "5坪", ""],
 ["26-11", "高雄Focus13加長超市米飛兔商品寄售", "進行中", "寄售", "Miffy", "", "2026-08-03", "2026-10-04", null, null, "", "商品寄售"],
 ["26-19", "婕米環球Brunch Brother文博會案", "結束", "寄售", "Brunch Brother", "", "2026-08-06", "2026-08-12", null, null, "", ""],
 ["", "台北時代百貨夢廣場", "取消", "快閃店", "Miffy", "", "2026-08-15", "2026-09-06", null, null, "90坪", ""],
-["", "7-11 哆啦A夢", "進行中", "7-11活動", "哆啦A夢", "", "2026-08-26", "2026-11-26", null, null, "", ""],
+["", "7-11 哆啦A夢", "進行中", "7-11門市上架", "哆啦A夢", "", "2026-08-26", "2026-11-26", null, null, "", ""],
 ["26-9", "高雄夢時代 MF/BB快閃店", "進行中", "快閃店", "Miffy,Brunch Brother,DIY", "", "2026-08-29", "2026-09-28", null, 50, "約50坪", ""],
 ["26-10", "台南新光三越我適快閃店", "進行中", "快閃店", "我適", "", "2026-09-03", "2026-10-04", null, 75, "約75坪(同去年4月位置)", "9/2進場"],
 ["26-17", "Sogo大巨蛋7F活動會館", "準備中", "快閃店", "Moomin,Miffy,Brunch Brother", "", "2026-09-08", "2026-09-28", null, 40, "約40坪", "9/7進場；9/29撤場"],
 ["26-13", "統一DreamPlaza B2 MS", "準備中", "快閃店", "Miffy", "", "2026-09-10", "2026-09-30", null, 29, "29坪", "8/13、8/14兩天進場；9/7一天撤場"],
-["", "7-11 Miffy烘焙盲盒", "準備中", "7-11活動", "Miffy", "", "2026-09-16", "2026-12-16", null, null, "", ""],
-["", "7-11 Miffy專案(萬花筒)", "準備中", "7-11活動", "Miffy", "", "2026-11-04", "2026-12-31", null, null, "", ""],
+["", "7-11 Miffy烘焙盲盒", "準備中", "7-11門市上架", "Miffy", "", "2026-09-16", "2026-12-16", null, null, "", ""],
+["", "7-11 Miffy專案(萬花筒)", "準備中", "7-11 快閃購", "Miffy", "", "2026-11-04", "2026-12-31", null, null, "", ""],
 ["26-14", "華山 Brunch Brother快閃店", "準備中", "快閃店", "Brunch Brother,DIY", "", "2026-12-17", "2027-01-31", null, 60, "中7A 60坪", "12/15~12/17進場 ; 22/1~2/2換場MF"],
 ["26-16", "駁二寒假檔期(MF/MM/BB/PG)", "準備中", "快閃店", "Miffy,Moomin,Brunch Brother,Pingu,DIY", "", "2026-12-23", "2027-03-09", null, 320, "P3倉庫320坪", "12/18~12/22進場；3/10~3/12撤場"],
 ["", "彰化燈會案", "準備中", "快閃店", "", "", "2026-12-25", "2027-02-28", null, null, "", ""],
@@ -391,7 +392,7 @@ const RAW = [
 ["", "誠品松高路人行道", "取消", "快閃店", "", "", null, null, null, null, "", ""],
 ["", "高雄時代百貨B1(長期)快閃店", "取消", "快閃店", "我適", "", null, null, null, null, "", ""]
 ];
-const SNAPSHOT = "2026-09-03";
+const SNAPSHOT = "2026-09-04";
 </script>
 <script>
 (function(){
@@ -439,6 +440,31 @@ const rows = RAW.map(r => ({
   owner:r[5], start:D(r[6]), end:D(r[7]),
   goal:r[8], ping:r[9], size:r[10], note:r[11]
 }));
+
+/* 表格顯示細項類型，上方頁籤則依商業屬性併成三大類：
+   自營快閃店 ／ B2B（寄售、賣斷）／ 7-ELEVEN 通路 */
+const TYPE_GROUP = {
+  "快閃店":"快閃店",
+  "寄售":"寄售/賣斷", "賣斷":"寄售/賣斷",
+  "7-11 快閃購":"7-11活動", "7-11門市預購":"7-11活動", "7-11門市上架":"7-11活動"
+};
+const groupOf = r => TYPE_GROUP[r.type] || r.type || "";
+
+/* 時程表只看得到櫃點名稱，所以把類型標在名稱前面。
+   快閃店不標（那頁全都是，標了只是噪音）；7-11 去掉重複的「7-11」字樣。 */
+const MARK = {
+  "寄售":"寄售", "賣斷":"賣斷",
+  "7-11 快閃購":"快閃購", "7-11門市預購":"門市預購", "7-11門市上架":"門市上架"
+};
+/* 標註要短，名稱開頭重複的 7-11 也去掉——欄寬有限，要留給看得出是哪個 IP 的部分。
+   完整的類型與原始名稱放在滑鼠提示裡。 */
+const shortName = r => r.name.replace(/^7\s*-?\s*11\s*/, "");
+/* 類型用灰色細字＋分隔線，讓活動名稱在視覺上跳出來 */
+const markedHTML = r => {
+  const m = MARK[r.type];
+  return (m ? '<i class="pre">' + esc(m) + '｜</i>' : "") + esc(shortName(r));
+};
+const fullName = r => (MARK[r.type] ? r.type + "　" : "") + r.name;
 rows.forEach(r => { r.days = (r.start && r.end) ? Math.round((r.end-r.start)/DAY)+1 : null; });
 
 /* 視窗：本月起連續 5 個月，每月自動推進 */
@@ -478,14 +504,14 @@ const inWin = rows
   .filter(r => r.start && r.start <= WIN_END && endOf(r) >= WIN_START)
   .sort((a,b) => a.start - b.start || a.name.localeCompare(b.name,"zh-Hant"));
 
-/* 分類頁籤同樣依實際資料產生：沒有的類型不長頁籤，新類型會自己冒出來 */
-const TYPE_ORDER = ["快閃店","寄售","銷售","7-11活動"];
-const usedTypes = [...new Set(rows.map(r => r.type).filter(Boolean))];
+/* 分類頁籤依實際資料產生：沒有的類型不長頁籤，新類型會自己冒出來 */
+const TYPE_ORDER = ["快閃店","寄售/賣斷","7-11活動"];
+const usedTypes = [...new Set(rows.map(groupOf).filter(Boolean))];
 const TYPES = ["全部活動"]
   .concat(TYPE_ORDER.filter(t => usedTypes.indexOf(t) >= 0))
   .concat(usedTypes.filter(t => TYPE_ORDER.indexOf(t) < 0).sort());
 let ganttType = "全部活動";
-const byType = t => t === "全部活動" ? inWin : inWin.filter(r => r.type === t);
+const byType = t => t === "全部活動" ? inWin : inWin.filter(r => groupOf(r) === t);
 const g = $("#gantt");
 
 $("#ganttTabs").innerHTML = TYPES.map(t =>
@@ -512,7 +538,7 @@ function drawGantt(){
   }
   $("#ganttEmpty").hidden = true;
   g.hidden = false;
-  let html = '<div class="gh lab">櫃點</div><div class="gh months">';
+  let html = '<div class="gh lab">檔期活動</div><div class="gh months">';
   months.forEach(m => {
     const l = pct(m.s), w = pct(m.e + DAY) - l;
     html += '<i class="' + (m.cur ? "cur" : "") + '" style="left:'+l+'%;width:'+w+'%">' + esc(m.label) + '</i>';
@@ -526,7 +552,7 @@ function drawGantt(){
     const l = pct(bs), w = Math.max(pct(be + DAY) - l, 0.6);
     const clip = (r.start < WIN_START ? " clipL" : "") + ((openEnded(r) || endOf(r) > WIN_END) ? " clipR" : "");
     html += '<div class="grow-l' + (r.status === "取消" ? " off" : "") + '" style="grid-row:' + (i+2) + '">'
-          +   '<span class="nm" title="' + (r.code ? esc(r.code) + "　" : "") + esc(r.name) + '">' + esc(r.name) + '</span>'
+          +   '<span class="nm" title="' + esc(fullName(r)) + '">' + markedHTML(r) + '</span>'
           + '</div>'
           + '<div class="grow-t" style="grid-row:' + (i+2) + '"><button class="bar ' + st.cls + clip + '" data-i="' + i + '"'
           +   ' style="left:'+l+'%;width:'+w+'%;background:' + catColor(r) + '"'
@@ -617,6 +643,7 @@ function render(){
     return '<tr class="' + (r.status === "取消" ? "off" : "") + '">'
       + '<td class="r mono idx">' + (i + 1) + '</td>'
       + '<td><button data-open="' + i + '" style="all:unset;cursor:pointer;font-weight:500">' + esc(r.name) + '</button></td>'
+      + '<td class="nowrap">' + esc(r.type || "—") + '</td>'
       + '<td><div class="tags">' + tags + '</div></td>'
       + '<td><span class="pill ' + st.pill + '">' + esc(r.status) + '</span></td>'
       + '<td class="mono nowrap">' + range + '</td>'
@@ -625,7 +652,7 @@ function render(){
       + '<td class="nowrap">' + esc(r.owner || "—") + '</td>'
       + '<td class="note">' + esc(r.note || "") + '</td>'
       + '</tr>';
-  }).join("") || '<tr><td colspan="9" class="empty">找不到符合的檔期。</td></tr>';
+  }).join("") || '<tr><td colspan="10" class="empty">找不到符合的檔期。</td></tr>';
 
   $("#count").textContent = "顯示 " + shown.length + " 筆，共 " + rows.length + " 筆";
   $("#tbody").querySelectorAll("[data-open]").forEach(b =>
@@ -637,7 +664,7 @@ const dlg = $("#dlg");
 function openCard(r){
   if(!r) return;
   $("#dTitle").textContent = r.name;
-  $("#dCode").textContent = r.type + "　" + r.status;
+  $("#dCode").textContent = (r.type || "—") + "　" + r.status;
   const f = [
     ["營業日", r.start ? fmtY(r.start) + (r.end ? " – " + fmtY(r.end) : " – 持續") : "未定"],
     ["天數", r.days == null ? "—" : r.days + " 天"],
