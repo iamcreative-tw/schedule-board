@@ -104,7 +104,7 @@ h2{font-family:var(--f-display); font-size:16px; font-weight:700; margin:0; lett
 /* ── 甘特圖 ── */
 .card{background:var(--surface); border:1px solid var(--rule); border-radius:10px; box-shadow:var(--shadow); overflow:hidden}
 .gscroll{overflow-x:auto}
-.gantt{--lw:186px; display:grid; grid-template-columns:var(--lw) minmax(620px,1fr); position:relative; min-width:min-content}
+.gantt{--lw:200px; display:grid; grid-template-columns:var(--lw) minmax(620px,1fr); position:relative; min-width:min-content}
 .gantt[hidden]{display:none}
 .gh{
   position:sticky; top:0; z-index:4; background:var(--surface-2);
@@ -131,6 +131,7 @@ h2{font-family:var(--f-display); font-size:16px; font-weight:700; margin:0; lett
 }
 .grow-l .nm{font-size:11.5px; font-weight:500; line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .grow-l.off .nm{color:var(--ink-3); text-decoration:line-through}
+.grow-l .pre{font-style:normal; font-weight:400; color:var(--ink-3)}
 
 .grow-t{
   grid-column:2; position:relative; border-bottom:1px solid var(--rule-2);
@@ -269,7 +270,7 @@ footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--rule); font
 
   <section>
     <div class="sec">
-      <h2>檔期甘特圖</h2>
+      <h2>檔期時程表</h2>
       <p id="ganttRange">—</p>
     </div>
     <div class="tabrow">
@@ -287,17 +288,17 @@ footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--rule); font
   <section style="margin-top:38px">
     <div class="sec">
       <h2>全部檔期活動一覽表</h2>
-      <p>可搜尋櫃點、檔次編號、主題、窗口</p>
+      <p>可搜尋活動名稱、類型、主題、窗口</p>
     </div>
     <div class="tools">
-      <input class="search" id="q" type="search" placeholder="搜尋櫃點、檔次編號、主題…" autocomplete="off">
+      <input class="search" id="q" type="search" placeholder="搜尋活動名稱、類型、主題…" autocomplete="off">
       <div class="chips" id="chips"></div>
     </div>
     <div class="card">
       <div class="tscroll">
         <table>
           <thead><tr>
-            <th class="r idxh">#</th><th>櫃點</th><th>主題</th><th>狀態</th>
+            <th class="r idxh">#</th><th>檔期活動</th><th>類型</th><th>主題</th><th>狀態</th>
             <th>營業日</th><th class="r">天數</th>
             <th class="r">坪數</th><th>窗口</th><th>備註</th>
           </tr></thead>
@@ -371,6 +372,31 @@ const rows = RAW.map(r => ({
   owner:r[5], start:D(r[6]), end:D(r[7]),
   goal:r[8], ping:r[9], size:r[10], note:r[11]
 }));
+
+/* 表格顯示細項類型，上方頁籤則依商業屬性併成三大類：
+   自營快閃店 ／ B2B（寄售、賣斷）／ 7-ELEVEN 通路 */
+const TYPE_GROUP = {
+  "快閃店":"快閃店",
+  "寄售":"寄售/賣斷", "賣斷":"寄售/賣斷",
+  "7-11 快閃購":"7-11活動", "7-11門市預購":"7-11活動", "7-11門市上架":"7-11活動"
+};
+const groupOf = r => TYPE_GROUP[r.type] || r.type || "";
+
+/* 時程表只看得到櫃點名稱，所以把類型標在名稱前面。
+   快閃店不標（那頁全都是，標了只是噪音）；7-11 去掉重複的「7-11」字樣。 */
+const MARK = {
+  "寄售":"寄售", "賣斷":"賣斷",
+  "7-11 快閃購":"快閃購", "7-11門市預購":"門市預購", "7-11門市上架":"門市上架"
+};
+/* 標註要短，名稱開頭重複的 7-11 也去掉——欄寬有限，要留給看得出是哪個 IP 的部分。
+   完整的類型與原始名稱放在滑鼠提示裡。 */
+const shortName = r => r.name.replace(/^7\s*-?\s*11\s*/, "");
+/* 類型用灰色細字＋分隔線，讓活動名稱在視覺上跳出來 */
+const markedHTML = r => {
+  const m = MARK[r.type];
+  return (m ? '<i class="pre">' + esc(m) + '｜</i>' : "") + esc(shortName(r));
+};
+const fullName = r => (MARK[r.type] ? r.type + "　" : "") + r.name;
 rows.forEach(r => { r.days = (r.start && r.end) ? Math.round((r.end-r.start)/DAY)+1 : null; });
 
 /* 視窗：本月起連續 5 個月，每月自動推進 */
@@ -410,14 +436,14 @@ const inWin = rows
   .filter(r => r.start && r.start <= WIN_END && endOf(r) >= WIN_START)
   .sort((a,b) => a.start - b.start || a.name.localeCompare(b.name,"zh-Hant"));
 
-/* 分類頁籤同樣依實際資料產生：沒有的類型不長頁籤，新類型會自己冒出來 */
-const TYPE_ORDER = ["快閃店","寄售","銷售","7-11活動"];
-const usedTypes = [...new Set(rows.map(r => r.type).filter(Boolean))];
+/* 分類頁籤依實際資料產生：沒有的類型不長頁籤，新類型會自己冒出來 */
+const TYPE_ORDER = ["快閃店","寄售/賣斷","7-11活動"];
+const usedTypes = [...new Set(rows.map(groupOf).filter(Boolean))];
 const TYPES = ["全部活動"]
   .concat(TYPE_ORDER.filter(t => usedTypes.indexOf(t) >= 0))
   .concat(usedTypes.filter(t => TYPE_ORDER.indexOf(t) < 0).sort());
 let ganttType = "全部活動";
-const byType = t => t === "全部活動" ? inWin : inWin.filter(r => r.type === t);
+const byType = t => t === "全部活動" ? inWin : inWin.filter(r => groupOf(r) === t);
 const g = $("#gantt");
 
 $("#ganttTabs").innerHTML = TYPES.map(t =>
@@ -444,7 +470,7 @@ function drawGantt(){
   }
   $("#ganttEmpty").hidden = true;
   g.hidden = false;
-  let html = '<div class="gh lab">櫃點</div><div class="gh months">';
+  let html = '<div class="gh lab">檔期活動</div><div class="gh months">';
   months.forEach(m => {
     const l = pct(m.s), w = pct(m.e + DAY) - l;
     html += '<i class="' + (m.cur ? "cur" : "") + '" style="left:'+l+'%;width:'+w+'%">' + esc(m.label) + '</i>';
@@ -458,7 +484,7 @@ function drawGantt(){
     const l = pct(bs), w = Math.max(pct(be + DAY) - l, 0.6);
     const clip = (r.start < WIN_START ? " clipL" : "") + ((openEnded(r) || endOf(r) > WIN_END) ? " clipR" : "");
     html += '<div class="grow-l' + (r.status === "取消" ? " off" : "") + '" style="grid-row:' + (i+2) + '">'
-          +   '<span class="nm" title="' + (r.code ? esc(r.code) + "　" : "") + esc(r.name) + '">' + esc(r.name) + '</span>'
+          +   '<span class="nm" title="' + esc(fullName(r)) + '">' + markedHTML(r) + '</span>'
           + '</div>'
           + '<div class="grow-t" style="grid-row:' + (i+2) + '"><button class="bar ' + st.cls + clip + '" data-i="' + i + '"'
           +   ' style="left:'+l+'%;width:'+w+'%;background:' + catColor(r) + '"'
@@ -549,6 +575,7 @@ function render(){
     return '<tr class="' + (r.status === "取消" ? "off" : "") + '">'
       + '<td class="r mono idx">' + (i + 1) + '</td>'
       + '<td><button data-open="' + i + '" style="all:unset;cursor:pointer;font-weight:500">' + esc(r.name) + '</button></td>'
+      + '<td class="nowrap">' + esc(r.type || "—") + '</td>'
       + '<td><div class="tags">' + tags + '</div></td>'
       + '<td><span class="pill ' + st.pill + '">' + esc(r.status) + '</span></td>'
       + '<td class="mono nowrap">' + range + '</td>'
@@ -557,7 +584,7 @@ function render(){
       + '<td class="nowrap">' + esc(r.owner || "—") + '</td>'
       + '<td class="note">' + esc(r.note || "") + '</td>'
       + '</tr>';
-  }).join("") || '<tr><td colspan="9" class="empty">找不到符合的檔期。</td></tr>';
+  }).join("") || '<tr><td colspan="10" class="empty">找不到符合的檔期。</td></tr>';
 
   $("#count").textContent = "顯示 " + shown.length + " 筆，共 " + rows.length + " 筆";
   $("#tbody").querySelectorAll("[data-open]").forEach(b =>
@@ -569,7 +596,7 @@ const dlg = $("#dlg");
 function openCard(r){
   if(!r) return;
   $("#dTitle").textContent = r.name;
-  $("#dCode").textContent = r.type + "　" + r.status;
+  $("#dCode").textContent = (r.type || "—") + "　" + r.status;
   const f = [
     ["營業日", r.start ? fmtY(r.start) + (r.end ? " – " + fmtY(r.end) : " – 持續") : "未定"],
     ["天數", r.days == null ? "—" : r.days + " 天"],
