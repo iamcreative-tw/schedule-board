@@ -164,6 +164,74 @@ def strip_goal(rows):
     return removed
 
 
+SNAPSHOT = "snapshot.json"      # 上次的資料，只用來比對差異，不會發布出去
+CHANGELOG = "最近更新.md"        # 這次改了什麼，給 Sarah 轉寄給同仁
+
+# 要比對的欄位（索引 → 給人看的名稱）。
+# 跳過 0（檔次編號，已停用）和 8（營業目標，公開版本來就沒有）。
+FIELDS = {1:"活動名稱", 2:"狀態", 3:"類型", 4:"主題", 5:"進場窗口",
+          6:"開始日", 7:"結束日", 9:"坪數", 10:"場地", 11:"備註"}
+
+
+def show(v):
+    return "（空白）" if v in (None, "") else str(v)
+
+
+def period(r):
+    if not r[6]:
+        return "日期未定"
+    return f"{r[6]} ~ {r[7]}" if r[7] else f"{r[6]} 起"
+
+
+def diff(old, new):
+    """old / new 都是 {Notion頁面id: 欄位陣列}。用頁面 id 當識別，改名也認得出是同一筆。"""
+    added   = [new[k] for k in new if k not in old]
+    gone    = [old[k] for k in old if k not in new]
+    edited  = []
+    for k, n in new.items():
+        o = old.get(k)
+        if not o:
+            continue
+        diffs = [(lab, o[i] if i < len(o) else None, n[i])
+                 for i, lab in FIELDS.items()
+                 if (o[i] if i < len(o) else None) != n[i]
+                 and not ((o[i] if i < len(o) else None) in (None, "") and n[i] in (None, ""))]
+        if diffs:
+            edited.append((n, diffs))
+    return added, gone, edited
+
+
+def changelog(added, gone, edited, today, first_run):
+    L = [f"# 檔期活動看板　更新通知　{today}", ""]
+    if first_run:
+        L += ["這是第一次建立比對基準，所以沒有變更紀錄。",
+              "下次更新開始，這裡就會列出異動內容。", ""]
+    elif not (added or gone or edited):
+        L += ["**這次沒有任何異動**，看板內容跟上次相同。", ""]
+    else:
+        if added:
+            L += [f"## 新增檔期（{len(added)} 檔）", ""]
+            for r in added:
+                L.append(f"- **{r[1]}**")
+                L.append(f"  {period(r)}｜{show(r[3])}｜{show(r[2])}"
+                         + (f"｜主題 {r[4]}" if r[4] else ""))
+            L.append("")
+        if edited:
+            L += [f"## 內容變更（{len(edited)} 檔）", ""]
+            for r, ds in edited:
+                L.append(f"- **{r[1]}**")
+                for lab, o, n in ds:
+                    L.append(f"  - {lab}：{show(o)} → **{show(n)}**")
+            L.append("")
+        if gone:
+            L += [f"## 不再顯示於看板（{len(gone)} 檔）", ""]
+            for r in gone:
+                L.append(f"- {r[1]}")
+            L += ["", "> 可能是已從 Notion 刪除，或狀態改成洽談中／口袋名單。", ""]
+    L += ["---", "", "看板網址　https://iamcreative-tw.github.io/schedule-board/"]
+    return "\n".join(L)
+
+
 def main():
     pages = fetch_rows()
     print(f"從 Notion 讀到 {len(pages)} 筆")
@@ -172,12 +240,13 @@ def main():
 
     print(f"日期欄位：「{find_date_key(pages[0].get('properties', {}))}」")
 
-    rows = [to_row(p) for p in pages]
+    # 保留 Notion 頁面 id，比對差異時當識別用（改名也認得出是同一筆）
+    items = [(p.get("id"), to_row(p)) for p in pages]
+    items = [(i, r) for i, r in items if (r[2] or "") not in PRIVATE_STATUS]
+    print(f"已排除不公開的狀態（洽談中／口袋名單／未填狀態）：{len(pages)-len(items)} 筆 → 剩 {len(items)} 筆")
 
-    rows, dropped = drop_private(rows)
-    print(f"已排除不公開的狀態（洽談中／口袋名單／未填狀態）：{dropped} 筆 → 剩 {len(rows)} 筆")
-
-    removed = strip_goal(rows)
+    rows = [r for _, r in items]
+    removed = strip_goal(rows)          # 先清金額，快照才不會存到不該存的東西
     print(f"已清除 {removed} 筆營業目標")
 
     # 健康檢查：日期抓不到就中止，不要默默產出一份沒有甘特圖的網頁
@@ -209,6 +278,33 @@ def main():
 
     io.open(OUTPUT, "w", encoding="utf-8").write(html)
     print(f"✅ 已產生 {OUTPUT}（{len(html)} bytes，資料日期 {today}）")
+
+    # ── 跟上次比對，產生更新通知 ──
+    new_snap = {i: r for i, r in items}
+    try:
+        old_snap = json.load(io.open(SNAPSHOT, encoding="utf-8"))
+        first_run = False
+    except (FileNotFoundError, ValueError):
+        old_snap, first_run = {}, True
+
+    added, gone, edited = diff(old_snap, new_snap)
+    io.open(CHANGELOG, "w", encoding="utf-8").write(
+        changelog(added, gone, edited, today, first_run) + "\n")
+    json.dump(new_snap, io.open(SNAPSHOT, "w", encoding="utf-8"),
+              ensure_ascii=False, indent=1)
+
+    # 給工作流程判斷要不要寄信用：沒異動就不寄，免得信箱被無意義的通知洗版
+    has_change = bool(added or gone or edited) and not first_run
+    io.open("changed.flag", "w").write("yes" if has_change else "no")
+
+    if first_run:
+        print("📋 第一次執行，已建立比對基準（下次更新才會有變更紀錄）")
+    else:
+        print(f"📋 這次異動：新增 {len(added)}、變更 {len(edited)}、不再顯示 {len(gone)}")
+        for r in added:  print(f"    ＋ {r[1]}")
+        for r, ds in edited:
+            print(f"    ✎ {r[1]}：" + "、".join(f"{l} {show(o)}→{show(n)}" for l, o, n in ds))
+        for r in gone:   print(f"    － {r[1]}")
 
 
 if __name__ == "__main__":
