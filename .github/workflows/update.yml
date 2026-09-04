@@ -1,5 +1,6 @@
 name: 更新檔期資料
 
+# 只有手動按按鈕才會執行，不會自己偷跑
 on:
   workflow_dispatch:
 
@@ -7,7 +8,7 @@ jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write        # 允許把產生的 index.html 存回 repo
 
     steps:
       - name: 取得程式碼
@@ -23,15 +24,40 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         run: python build.py
 
-      - name: 存回 GitHub
+      - name: 寄更新通知給 Sarah
+        env:
+          MAIL_WEBHOOK: ${{ secrets.MAIL_WEBHOOK }}
+          MAIL_TOKEN: ${{ secrets.MAIL_TOKEN }}
+        run: |
+          if [ ! -f changed.flag ] || [ "$(cat changed.flag)" != "yes" ]; then
+            echo "這次沒有異動，不寄信。"
+            exit 0
+          fi
+          if [ -z "$MAIL_WEBHOOK" ]; then
+            echo "還沒設定 MAIL_WEBHOOK，略過寄信（其他功能不受影響）。"
+            exit 0
+          fi
+          python3 -c "
+          import json, io, os
+          json.dump({'token': os.environ.get('MAIL_TOKEN',''),
+                     'subject': '【檔期活動看板】更新通知',
+                     'body': io.open('最近更新.md', encoding='utf-8').read()},
+                    io.open('mail.json','w',encoding='utf-8'), ensure_ascii=False)
+          "
+          curl -sL -X POST -H "Content-Type: application/json" \
+               --data-binary @mail.json "$MAIL_WEBHOOK" || echo "寄信失敗，但看板已更新成功"
+          echo
+          rm -f mail.json changed.flag
+
+      - name: 存回 GitHub（網站會自動重新發布）
         run: |
           git config --global user.name  "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git add index.html
+          git add index.html snapshot.json 最近更新.md
           if git diff --staged --quiet; then
             echo "資料沒有變動，這次不用更新。"
           else
             git commit -m "更新檔期資料 $(TZ='Asia/Taipei' date '+%Y-%m-%d %H:%M')"
             git push
-            echo "已更新，約 1 分鐘後網站生效。"
+            echo "✅ 已更新，約 1 分鐘後網站生效。"
           fi
