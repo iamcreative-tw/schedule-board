@@ -24,51 +24,9 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         run: python build.py
 
-      - name: 寄更新通知給 Sarah
-        env:
-          MAIL_WEBHOOK: ${{ secrets.MAIL_WEBHOOK }}
-          MAIL_TOKEN: ${{ secrets.MAIL_TOKEN }}
-        run: |
-          if [ ! -f changed.flag ] || [ "$(cat changed.flag)" != "yes" ]; then
-            echo "這次沒有異動，不寄信。"
-            exit 0
-          fi
-          if [ -z "$MAIL_WEBHOOK" ]; then
-            echo "還沒設定 MAIL_WEBHOOK，略過寄信（其他功能不受影響）。"
-            exit 0
-          fi
-          # 先擋掉貼錯網址的情況，免得把整個錯誤網頁倒進紀錄裡
-          case "$MAIL_WEBHOOK" in
-            https://script.google.com/macros/*) ;;
-            *) echo "❌ MAIL_WEBHOOK 不是 Apps Script 網址。"
-               echo "   正確格式：https://script.google.com/macros/s/..../exec"
-               echo "   請到 Settings → Secrets 重新設定。這次略過寄信，看板已正常更新。"
-               exit 0 ;;
-          esac
-
-          python3 -c "
-          import json, io, os
-          json.dump({'token': os.environ.get('MAIL_TOKEN',''),
-                     'subject': '【檔期活動看板】更新通知',
-                     'body': io.open('最近更新.md', encoding='utf-8').read()},
-                    io.open('mail.json','w',encoding='utf-8'), ensure_ascii=False)
-          "
-          CODE=$(curl -sL -o resp.txt -w "%{http_code}" -X POST \
-                 -H "Content-Type: application/json" \
-                 --data-binary @mail.json "$MAIL_WEBHOOK") || CODE="連線失敗"
-          echo "HTTP 狀態：$CODE"
-          echo "回應開頭：$(head -c 150 resp.txt 2>/dev/null | tr -d '\n')"
-
-          if grep -q "已寄出" resp.txt 2>/dev/null; then
-            echo "✅ 通知信已寄出"
-          elif grep -q "通關密語不符" resp.txt 2>/dev/null; then
-            echo "❌ 通關密語不符：GitHub 的 MAIL_TOKEN 跟 Apps Script 裡的 TOKEN 不一樣"
-          elif head -c 300 resp.txt 2>/dev/null | grep -qi "<html\|<!doctype"; then
-            echo "❌ 收到的是網頁不是回應。通常是 Apps Script 的「具有存取權的使用者」沒設成「所有人」"
-          else
-            echo "⚠️ 沒收到預期回應，請看上面那行"
-          fi
-          rm -f mail.json resp.txt changed.flag
+      # 通知信不在這裡寄。Google Workspace 不讓 Apps Script 對外開放，
+      # 所以改成 Apps Script 每 15 分鐘自己來讀「最近更新.md」，有變動才寄信。
+      # 程式在 Apps Script 專案「檔期看板通知」的 檢查更新() 裡。
 
       - name: 存回 GitHub（網站會自動重新發布）
         run: |
