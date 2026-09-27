@@ -1,6 +1,5 @@
 name: 更新檔期資料
 
-# 只有手動按按鈕才會執行，不會自己偷跑
 on:
   workflow_dispatch:
 
@@ -8,7 +7,7 @@ jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write        # 允許把產生的 index.html 存回 repo
+      contents: write
 
     steps:
       - name: 取得程式碼
@@ -24,15 +23,11 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         run: python build.py
 
-      # 通知信不在這裡寄。Google Workspace 不讓 Apps Script 對外開放，
-      # 所以改成 Apps Script 每 15 分鐘自己來讀「最近更新.md」，有變動才寄信。
-      # 程式在 Apps Script 專案「檔期看板通知」的 檢查更新() 裡。
-
       - name: 存回 GitHub（網站會自動重新發布）
         run: |
           git config --global user.name  "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git add index.html snapshot.json 最近更新.md
+          git add index.html snapshot.json 最近更新.md version.json
           if git diff --staged --quiet; then
             echo "資料沒有變動，這次不用更新。"
           else
