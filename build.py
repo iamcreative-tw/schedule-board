@@ -166,6 +166,7 @@ def strip_goal(rows):
 
 SNAPSHOT = "snapshot.json"      # 上次的資料，只用來比對差異，不會發布出去
 CHANGELOG = "最近更新.md"        # 這次改了什麼，給 Sarah 轉寄給同仁
+VERSION_FILE = "version.json"   # 版本號（月份＋流水號），只用來在網頁上顯示，不影響資料本身
 
 # 要比對的欄位（索引 → 給人看的名稱）。
 # 跳過 0（檔次編號，已停用）和 8（營業目標，公開版本來就沒有）。
@@ -232,6 +233,19 @@ def changelog(added, gone, edited, today, first_run):
     return "\n".join(L)
 
 
+def bump_version(now):
+    """版本號＝月份＋流水號，例如 2026.09-03（同一個月內每 Run 一次 +1，換月自動歸零重算）。
+    只用來給 Sarah 一眼看出「這是這個月第幾次更新」，跟資料內容無關，壞了也不影響看板本身。"""
+    ym = now.strftime("%Y.%m")
+    try:
+        v = json.load(io.open(VERSION_FILE, encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        v = {}
+    seq = (v.get("seq", 0) + 1) if v.get("ym") == ym else 1
+    json.dump({"ym": ym, "seq": seq}, io.open(VERSION_FILE, "w", encoding="utf-8"), ensure_ascii=False)
+    return f"{ym}-{seq:02d}"
+
+
 def main():
     pages = fetch_rows()
     print(f"從 Notion 讀到 {len(pages)} 筆")
@@ -270,14 +284,20 @@ def main():
 
     tpl = io.open(TEMPLATE, encoding="utf-8").read()
     raw_js = "[\n" + ",\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n]"
-    today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
 
-    html = tpl.replace("__RAW__", raw_js).replace("__SNAPSHOT__", today)
-    if "__RAW__" in html or "__SNAPSHOT__" in html:
+    now = datetime.now(timezone(timedelta(hours=8)))
+    today = now.strftime("%Y-%m-%d")          # changelog 標題用，格式維持不變
+    stamp = now.strftime("%Y-%m-%d %H:%M")    # 網頁上顯示的「資料更新」，含時間
+    version = bump_version(now)               # 網頁上顯示的「版本」，月份＋流水號
+
+    html = (tpl.replace("__RAW__", raw_js)
+               .replace("__SNAPSHOT__", stamp)
+               .replace("__VERSION__", version))
+    if "__RAW__" in html or "__SNAPSHOT__" in html or "__VERSION__" in html:
         sys.exit("❌ 版型檔的佔位符沒有被正確取代")
 
     io.open(OUTPUT, "w", encoding="utf-8").write(html)
-    print(f"✅ 已產生 {OUTPUT}（{len(html)} bytes，資料日期 {today}）")
+    print(f"✅ 已產生 {OUTPUT}（{len(html)} bytes，版本 {version}，資料時間 {stamp}）")
 
     # ── 跟上次比對，產生更新通知 ──
     new_snap = {i: r for i, r in items}
