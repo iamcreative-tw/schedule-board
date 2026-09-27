@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>檔期活動看板</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -251,6 +256,8 @@ footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--rule); font
 }
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 </style>
+</head>
+<body>
 <div class="wrap">
   <header>
     <div class="top">
@@ -259,7 +266,7 @@ footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--rule); font
         <p class="sub">快閃店 · 寄售 · 7-11 活動</p>
       </div>
       <div class="stamp mono">
-        資料更新 <b id="stampDate">—</b><br>
+        版本 <b id="verLabel">—</b>　資料更新 <b id="stampDate">—</b><br>
         來源：Notion 檔期活動看板
       </div>
     </div>
@@ -325,6 +332,7 @@ footer{margin-top:30px; padding-top:16px; border-top:1px solid var(--rule); font
 // [檔次, 櫃點, 狀態, 類型, 主題, 窗口, 起, 迄, 目標(萬), 坪數, 場地大小, 備註]
 const RAW = __RAW__;
 const SNAPSHOT = "__SNAPSHOT__";
+const VERSION = "__VERSION__";
 </script>
 <script>
 (function(){
@@ -413,6 +421,7 @@ for(let i=0;i<5;i++){
   const d = new Date(s);
   months.push({ s, e, cur:i===0, label:d.getUTCFullYear()+"年"+(d.getUTCMonth()+1)+"月" });
 }
+$("#verLabel").textContent = VERSION;
 $("#stampDate").textContent = SNAPSHOT.replace(/-/g,"/");
 $("#ganttRange").textContent = months[0].label + " – " + months[4].label + "（每月自動推進）";
 
@@ -614,3 +623,5 @@ dlg.addEventListener("click", e => { if(e.target === dlg) dlg.close(); });
 render();
 })();
 </script>
+</body>
+</html>
